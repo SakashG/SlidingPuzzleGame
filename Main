@@ -1,0 +1,228 @@
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import java.util.*;
+
+class PuzzleButtonListener implements ActionListener {
+    private final JButton button;
+    private final Puzzle p;  // Puzzle reference
+
+    PuzzleButtonListener(JButton button, Puzzle p) {
+        this.button = button;
+        this.p = p;
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        // Change the text when the button is clicked
+        String value = button.getText();
+        int row = 0;
+        int column = 0;
+        for (int i = 0; i <p.getRows(); i++){
+            for (int j = 0; j < p.getColumns(); j++){
+                if (p.initArray[i][j].equals(value)){
+                    row = i;
+                    column = j;
+                }
+            }
+        }
+        String temptext = "";
+        
+        if (p.isNeighborEmpty(row, column) == true){
+        for (int i = 0; i < p.getRows(); i++){
+            for (int j = 0; j < p.getColumns(); j++){
+                if ((p.initArray[i][j]).equals(" ")){
+                    p.initArray[i][j] = "0";
+                }
+            }
+        }
+        
+        
+        for (int i = 0; i < p.getRows(); i++){
+            for (int j = 0; j < p.getColumns(); j++){
+                if (value.equals(p.initArray[i][j])){
+                    temptext = value;
+                    p.initArray[i][j] = " ";
+                    
+                }
+            }
+        }
+        
+        for (int i = 0; i < p.getRows(); i++){
+            for (int j = 0; j < p.getColumns(); j++){
+                if ((p.initArray[i][j]).equals("0")){
+                    p.initArray[i][j] = value;
+                }
+            }
+        }
+    }
+        p.implementChangesToPuzzle();
+        
+    }
+}
+
+class Puzzle extends JPanel {
+    private int columns;
+    private int rows;
+    public static int x;
+    public static int y;
+    private int buttonLength, buttonWidth;
+    private int spaceBetweenButtons;
+    public static String[][] initArray;
+
+    public Puzzle(int initColumns, int initRows) {
+        columns = initColumns;
+        rows = initRows;
+        spaceBetweenButtons = 20;
+        buttonLength = 80; // Set a common size for all buttons
+        buttonWidth = 80; // Set a common size for all buttons
+        x = ((rows*buttonLength)+((rows-1)*spaceBetweenButtons)+40);
+    y = ((columns*buttonWidth)+((columns-1)*spaceBetweenButtons)+200);
+        initArray = new String[rows][columns]; // Initialize the initArray
+        setLayout(null);
+        makePuzzle();
+    }
+
+    public void initPuzzleValues() {
+        ArrayList<Integer> initList = new ArrayList<Integer>();
+        
+        int initValue = 0;
+        for (int i = 0; i < (rows*columns); i++){
+            initValue++;
+            initList.add(initValue);
+        }
+        int finalValue = 0;
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                int index = (int)(Math.random()*initList.size());
+                finalValue = initList.get(index);
+                initList.remove(index);
+                String num = finalValue + "";
+                
+                initArray[i][j] = num;
+                
+            }
+        }
+        makeEmptyTile();
+    }
+    public void makeEmptyTile(){
+        String max = (rows*columns)+"";
+        String lastValue = initArray[rows-1][columns-1];
+       
+        for (int i = 0; i < rows; i++){
+            for (int j = 0; j < columns; j++){
+                if (initArray[i][j].equals(max)){
+                  
+                    initArray[i][j] = lastValue;
+                    initArray[rows-1][columns-1] = " ";
+                    break;
+                }
+            }
+        }
+    }
+    public void addButtons(){
+        int buttonX = 20;
+        int buttonY = 20;
+        for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            JButton button = new JButton(initArray[i][j]);
+            button.setBounds(buttonX, buttonY, buttonLength, buttonWidth);
+                
+            add(button);
+            
+            // Pass the Puzzle object to PuzzleButtonListener
+            button.addActionListener(new PuzzleButtonListener(button, this));
+            
+            buttonX = buttonX + buttonLength + spaceBetweenButtons;
+        }
+        buttonX = 20;
+            buttonY = buttonY + buttonWidth + spaceBetweenButtons;
+    }
+    }
+    public void makePuzzle() {
+    initPuzzleValues();
+    addButtons();
+}
+    public void implementChangesToPuzzle(){
+        checkIfWin();
+        removeAll();
+        revalidate();
+        repaint();
+        addButtons();
+        
+    }
+    
+public boolean isNeighborEmpty(int i, int j) {
+    boolean checkUp = (i > 0 && initArray[i - 1][j].equals(" "));
+    boolean checkDown = (i < rows - 1 && initArray[i + 1][j].equals(" "));
+    boolean checkLeft = (j > 0 && initArray[i][j - 1].equals(" "));
+    boolean checkRight = (j < columns - 1 && initArray[i][j + 1].equals(" "));
+
+    return checkUp || checkDown || checkLeft || checkRight;
+}
+   public void checkIfWin() {
+    ArrayList<Integer> values = new ArrayList<>();
+    
+    // Extract values from buttons into an ArrayList
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            String value = initArray[i][j];
+            if (!value.equals(" ")) {
+                values.add(Integer.parseInt(value));
+            }
+        }
+    }
+    
+    // Check if the ArrayList is sorted
+    boolean isSorted = true;
+    for (int i = 0; i < values.size() - 1; i++) {
+        if (values.get(i) > values.get(i + 1)) {
+            isSorted = false;
+            break;
+        }
+    }
+    boolean lastCornerEmpty = false;
+    String value = initArray[rows-1][columns-1];
+    if (value.equals(" ")){
+        lastCornerEmpty = true;
+    }
+    // Print "Congratulations" if the puzzle is in numerical order
+    if (isSorted && lastCornerEmpty) {
+        System.out.println("Congratulations! You've solved the puzzle!");
+    } 
+}
+    public int getRows(){
+        return rows;
+    }
+    public int getColumns(){
+        return columns;
+    }
+}
+class Play {
+    private int numOfPlayers;
+    private Scanner scan;
+    public Play (int initNumOfPlayers){
+        numOfPlayers = initNumOfPlayers;
+        scan = new Scanner(System.in);
+    }
+    public void runGame(){
+        
+    }
+}
+public class Main extends JFrame {
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Sliding Puzzle Game");
+        Puzzle puzzle = new Puzzle(3, 3);
+        frame.add(puzzle);
+        
+        frame.setSize(puzzle.x, puzzle.y); // Adjusted frame size for better visibility
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+        
+    }
+}
